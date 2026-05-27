@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import torchvision.models as models
 
 
 ### For MNIST ### 
@@ -17,35 +19,47 @@ class SimpleMLP(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-
-def train(model, optimizer, loader, loss_fn):
+def train(model, optimizer, loader, loss_fn, device):
     model.train()
-    total_loss = 0
+    total_loss = 0.0
 
     for x, y in loader:
+        x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
-        out = model(x)
-        loss = loss_fn(out, y)
+        loss = loss_fn(model(x), y)
         loss.backward()
         optimizer.step()
-
         total_loss += loss.item()
 
     return total_loss / len(loader)
 
 
-
-def evaluate(model, loader, criterion):
+def evaluate(model, loader, criterion, device):
     model.eval()
     total_loss = 0.0
+
     with torch.no_grad():
         for x, y in loader:
-            x = x.view(x.size(0), -1)  # flatten for MLP
-            out = model(x)
-            loss = criterion(out, y)
+            x, y = x.to(device), y.to(device)
+            loss = criterion(model(x), y)
             total_loss += loss.item() * y.size(0)
+
     return total_loss / len(loader.dataset)
 
+
+def test(model, loader, device):
+    model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for x, y in loader:
+            x, y = x.to(device), y.to(device)
+            preds = model(x).argmax(dim=1)
+            correct += (preds == y).sum().item()
+            total += y.size(0)
+
+    return correct / total
 
 
 
@@ -75,8 +89,8 @@ class SimCLR(nn.Module):
         z = self.normalize(self.projector(h))
         return h, z
 
-model = SimCLR(proj_dim=128).to(device)
-model = torch.compile(model)
+# model = SimCLR(proj_dim=128).to(device)
+# model = torch.compile(model)
 
 
 @torch.compile
