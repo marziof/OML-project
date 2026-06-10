@@ -41,9 +41,9 @@ all_batches = list(train_loader)
 
 # ── Config ─────────────────────────────────────────────────────────────────
 
-N_EPOCHS  = 10
+N_EPOCHS  = 20
 N_WORKERS = 5
-LR        = 0.8 #0.1
+LR        = 0.1 #0.1
 TAU       = 20
 
 ALPHAS = [0.1, 0.5, 0.9]
@@ -138,8 +138,8 @@ for alpha in ALPHAS:
 
 # ── Save ───────────────────────────────────────────────────────────────────
 
-pkl_path = os.path.join(RESULTS_DIR, f"elastic_sweep_results_lr{LR}.pkl")
-csv_path = os.path.join(RESULTS_DIR, f"elastic_sweep_results_lr{LR}.csv")
+pkl_path = os.path.join(RESULTS_DIR, f"elastic_sweep_results_lr{LR}_modPull.pkl")
+csv_path = os.path.join(RESULTS_DIR, f"elastic_sweep_results_lr{LR}_modPull.csv")
 
 results_df.to_pickle(pkl_path)
 results_df.drop(columns=["train_loss_curve", "test_loss_curve"]).to_csv(csv_path, index=False)

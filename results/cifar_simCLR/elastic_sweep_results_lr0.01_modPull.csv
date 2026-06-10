@@ -1,0 +1,3 @@
+optimizer,alpha,beta,train_loss,test_accuracy
+SGD,,,0.06342539008782834,0.150390625
+ElasticSGD,0.1,1.0,6.216578483581543,0.203125

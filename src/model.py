@@ -65,35 +65,34 @@ def test(model, loader, device):
 
 ### For CIFAR10 ###
 
+# -----------------------
+# MODEL
+# -----------------------
 class SimCLR(nn.Module):
-
-    def __init__(self, proj_dim=128, hidden=2048):
+    def __init__(self, proj_dim=128):
         super().__init__()
+
         enc = models.resnet18(weights=None)
         enc.conv1 = nn.Conv2d(3, 64, 3, 1, 1, bias=False)
         enc.maxpool = nn.Identity()
         enc.fc = nn.Identity()
+
         self.encoder = enc
 
         self.projector = nn.Sequential(
-            nn.Linear(512, hidden),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden, proj_dim) # (bs, proj_dim)
+            nn.Linear(512, 2048),
+            nn.ReLU(),
+            nn.Linear(2048, proj_dim)
         )
-
-    def normalize(self, x, eps=1e-8):
-        return x / (x.norm(dim=-1, keepdim=True) + eps)
 
     def forward(self, x):
         h = self.encoder(x)
-        z = self.normalize(self.projector(h))
+        z = self.projector(h)
+        z = F.normalize(z, dim=1)
         return h, z
 
-# model = SimCLR(proj_dim=128).to(device)
-# model = torch.compile(model)
 
-
-@torch.compile
+#@torch.compile
 def nt_xent(z1, z2, tau=0.5):
     B, d = z1.shape
     z = torch.cat([z1, z2], dim=0)              # (2B, d)
