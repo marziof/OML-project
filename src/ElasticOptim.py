@@ -6,7 +6,8 @@ from src.model import nt_xent
 
 class ElasticOptim:
     def __init__(self, workers, master, optimizers, val_loader,
-        alpha=0.1,
+        alpha=0.8,
+        alpha_pull=0.8,
         beta=5.0,
         tau=10,
         device="cuda"
@@ -17,6 +18,7 @@ class ElasticOptim:
         self.val_loader = val_loader
 
         self.alpha = alpha
+        self.alpha_pull = alpha_pull
         self.beta = beta
         self.tau = tau
         self.device = device
@@ -76,7 +78,7 @@ class ElasticOptim:
         #pull workers toward master
         for i, model in enumerate(self.workers):
             for j, p_w in enumerate(model.parameters()):
-                p_w.data -= self.alpha * weights[i] * (p_w.data - master_params[j])
+                p_w.data -= self.alpha_pull * weights[i] * (p_w.data - master_params[j])
 
         # # proposed change:
         # for i, model in enumerate(self.workers):
@@ -105,7 +107,8 @@ class ElasticOptimSimCLR:
         master,
         optimizers,
         val_loader=None,   # ← add default None
-        alpha=0.1,
+        alpha=0.8,
+        alpha_pull=0.8,
         beta=5.0,
         tau=10,
         device="cuda"
@@ -116,6 +119,7 @@ class ElasticOptimSimCLR:
         self.val_loader = val_loader
 
         self.alpha = alpha
+        self.alpha_pull = alpha_pull
         self.beta = beta
         self.tau = tau
         self.device = device
@@ -193,7 +197,7 @@ class ElasticOptimSimCLR:
         # ---- pull workers ----
         for i, model in enumerate(self.workers):
             for j, p_w in enumerate(model.parameters()):
-                p_w.data -= self.alpha * weights[i] * (
+                p_w.data -= self.alpha_pull * weights[i] * (
                     p_w.data - master_params[j]
                 )
 

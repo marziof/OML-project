@@ -17,6 +17,8 @@ from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader
 import torchvision.models as models
 from tqdm import tqdm
+import argparse
+
 
 from utils.simCLR_helpers import SimCLRTransform, collate_fn, knn, extract_features
 from src.model import SimCLR, nt_xent
@@ -29,19 +31,37 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 
 # ── Config ─────────────────────────────────────────────────────────────────
 
-SGD_EPOCHS = 2
-N_EPOCHS   = 2
-N_WORKERS  = 4
-LR         = 0.01
-TAU        = 20
+def parse_args():
+    p = argparse.ArgumentParser(description="Training hyperparameter configuration")
 
-ALPHAS = [0.1] #[0.1, 0.5, 0.9]
-BETAS  = [1.0]#[0.0, 1.0, 5.0]
+    p.add_argument("--sgd_epochs", type=int,   default=2)
+    p.add_argument("--n_epochs",   type=int,   default=2)
+    p.add_argument("--n_workers",  type=int,   default=4)
+    p.add_argument("--lr",         type=float, default=0.01)
+    p.add_argument("--tau",        type=int,   default=20)
+
+    p.add_argument("--alphas", type=float, nargs="+", default=[0.1, 0.5, 0.9])
+    p.add_argument("--alphas_pull", type=float, nargs="+", default=[0.1, 0.5, 0.9])
+    p.add_argument("--betas",  type=float, nargs="+", default=[0.0, 1.0, 5.0])
+
+    return p.parse_args()
+
+
+args = parse_args()
+
+SGD_EPOCHS = args.sgd_epochs
+N_EPOCHS   = args.n_epochs
+N_WORKERS  = args.n_workers
+LR         = args.lr
+TAU        = args.tau
+ALPHAS     = args.alphas
+ALPHAS_PULL= args.alphas_pull
+BETAS      = args.betas
 
 # ── Results container ──────────────────────────────────────────────────────
 
 columns = [
-    "optimizer", "alpha", "beta",
+    "optimizer", "alpha", "alpha_pull", "beta",
     "train_loss", "test_accuracy",
     "train_loss_curve",
 ]
@@ -130,6 +150,7 @@ print(f"SGD kNN accuracy: {sgd_acc * 100:.2f}%")
 results_df = pd.concat([results_df, pd.DataFrame([{
     "optimizer":        "SGD",
     "alpha":            None,
+    "alpha_pull":       None,
     "beta":             None,
     "train_loss":       sgd_loss_curve[-1],
     "test_accuracy":    sgd_acc,
@@ -142,72 +163,75 @@ results_df = pd.concat([results_df, pd.DataFrame([{
 
 print("\n══ Starting ElasticSimCLR sweep ══")
 for alpha in ALPHAS:
-    for beta in BETAS:
-        print(f"\n══ ElasticSimCLR  alpha={alpha}  beta={beta} ══")
+    for alpha_pull in ALPHAS_PULL:
+        for beta in BETAS:
+            print(f"\n══ ElasticSimCLR  alpha={alpha} alpha_pull={alpha_pull}  beta={beta} ══")
 
-        workers = [SimCLR().to(device) for _ in range(N_WORKERS)]
-        master  = SimCLR().to(device)
+            workers = [SimCLR().to(device) for _ in range(N_WORKERS)]
+            master  = SimCLR().to(device)
 
-        worker_opts = [
-            torch.optim.SGD(w.parameters(), lr=LR, momentum=0.9)
-            for w in workers
-        ]
+            worker_opts = [
+                torch.optim.SGD(w.parameters(), lr=LR, momentum=0.9)
+                for w in workers
+            ]
 
-        elastic_opt = ElasticOptimSimCLR(
-            workers=workers,
-            master=master,
-            optimizers=worker_opts,
-            alpha=alpha,
-            beta=beta,
-            tau=TAU,
-            device=device,
-        )
+            elastic_opt = ElasticOptimSimCLR(
+                workers=workers,
+                master=master,
+                optimizers=worker_opts,
+                alpha=alpha,
+                alpha_pull=alpha_pull,
+                beta=beta,
+                tau=TAU,
+                device=device,
+            )
 
-        elastic_loss_curve = []
+            elastic_loss_curve = []
 
-        for epoch in tqdm(range(N_EPOCHS), desc="Training ElasticSGD"):
-            batches = list(train_loader)
-            epoch_loss = 0.0
-            n_steps    = 0
-            
-            idx = 0
-            for i in range(0, len(batches) - N_WORKERS, N_WORKERS):
-                idx+=1
-                if idx >= 3:
-                    break
-                elastic_opt.step(batches[i : i + N_WORKERS])
+            for epoch in tqdm(range(N_EPOCHS), desc="Training ElasticSGD"):
+                batches = list(train_loader)
+                epoch_loss = 0.0
+                n_steps    = 0
+                
+                idx = 0
+                for i in range(0, len(batches) - N_WORKERS, N_WORKERS):
+                    idx+=1
+                    if idx >= 3:
+                        break
+                    elastic_opt.step(batches[i : i + N_WORKERS])
 
-                # track average worker loss for this mini-step
-                with torch.no_grad():
-                    step_loss = 0.0
-                    for w_idx, worker in enumerate(workers):
-                        (x1, x2), _ = batches[i + w_idx]
-                        x1, x2 = x1.to(device), x2.to(device)
-                        _, z1 = worker(x1)
-                        _, z2 = worker(x2)
-                        step_loss += nt_xent(z1, z2).item()
-                    epoch_loss += step_loss / N_WORKERS
-                    n_steps    += 1
+                    # track average worker loss for this mini-step
+                    with torch.no_grad():
+                        step_loss = 0.0
+                        for w_idx, worker in enumerate(workers):
+                            (x1, x2), _ = batches[i + w_idx]
+                            x1, x2 = x1.to(device), x2.to(device)
+                            _, z1 = worker(x1)
+                            _, z2 = worker(x2)
+                            step_loss += nt_xent(z1, z2).item()
+                        epoch_loss += step_loss / N_WORKERS
+                        n_steps    += 1
 
-            avg_loss = epoch_loss / max(n_steps, 1)
-            elastic_loss_curve.append(avg_loss)
-            print(f"  [Epoch {epoch+1}/{N_EPOCHS}] avg_worker_loss={avg_loss:.4f}")
+                avg_loss = epoch_loss / max(n_steps, 1)
+                elastic_loss_curve.append(avg_loss)
+                print(f"  [Epoch {epoch+1}/{N_EPOCHS}] avg_worker_loss={avg_loss:.4f}")
 
-        # kNN eval on master
-        eval_frac = 0.05
-        feat_tr, y_tr = extract_features(master, train_loader, device, frac=eval_frac)
-        feat_te, y_te = extract_features(master, test_loader,  device, frac=eval_frac)
-        acc = knn(feat_tr, y_tr, feat_te, y_te)
-        print(f"  kNN accuracy: {acc * 100:.2f}%")
+            # kNN eval on master
+            eval_frac = 0.05
+            feat_tr, y_tr = extract_features(master, train_loader, device, frac=eval_frac)
+            feat_te, y_te = extract_features(master, test_loader,  device, frac=eval_frac)
+            acc = knn(feat_tr, y_tr, feat_te, y_te)
+            print(f"  kNN accuracy: {acc * 100:.2f}%")
 
-        results_df = pd.concat([results_df, pd.DataFrame([{
-            "optimizer":        "ElasticSGD",
-            "alpha":            alpha,
-            "beta":             beta,
-            "train_loss":       elastic_loss_curve[-1],
-            "test_accuracy":    acc,
-            "train_loss_curve": elastic_loss_curve,
-        }])], ignore_index=True)
+            results_df = pd.concat([results_df, pd.DataFrame([{
+                "optimizer":        "ElasticSGD",
+                "alpha":            alpha,
+                "alpha_pull":       alpha_pull,
+                "beta":             beta,
+                "train_loss":       elastic_loss_curve[-1],
+                "test_accuracy":    acc,
+                "train_loss_curve": elastic_loss_curve,
+            }])], ignore_index=True)
 
 # ══════════════════════════════════════════════════════════════════════════
 # 3.  SAVE
@@ -224,4 +248,4 @@ results_df.drop(columns=["train_loss_curve"]).to_csv(csv_path, index=False)
 
 print(f"\nSaved to {pkl_path} and {csv_path}")
 print("\n══ Summary ══")
-print(results_df[["optimizer", "alpha", "beta", "train_loss", "test_accuracy"]].to_string(index=False))
+print(results_df[["optimizer", "alpha", "alpha_pull", "beta", "train_loss", "test_accuracy"]].to_string(index=False))
