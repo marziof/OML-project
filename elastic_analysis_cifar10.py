@@ -38,6 +38,9 @@ TAU        = 20
 ALPHAS = [0.1] #[0.1, 0.5, 0.9]
 BETAS  = [1.0]#[0.0, 1.0, 5.0]
 
+eval_frac = 0.05 # fraction of data to use for kNN eval (to speed up)
+DEBUG = False # if True, runs only 3 mini-batches per epoch for quick testing
+
 # ── Results container ──────────────────────────────────────────────────────
 
 columns = [
@@ -94,9 +97,10 @@ for epoch in tqdm(range(SGD_EPOCHS), desc="Training SGD"):
     total_loss = 0.0
     idx = 0
     for (x1, x2), _ in tqdm(train_loader, desc="Training batches"):
-        idx+=1
-        if idx >= 3:
-            break
+        if DEBUG:
+            idx+=1
+            if idx >= 3:
+                break
         x1, x2 = x1.to(device), x2.to(device)
 
         _, z1 = sgd_model(x1)
@@ -122,9 +126,9 @@ for epoch in tqdm(range(SGD_EPOCHS), desc="Training SGD"):
 
 print("eval kNN on SGD model...")
 # kNN eval for SGD
-feat_tr, y_tr = extract_features(sgd_model, train_loader, device, frac=0.05)
-feat_te, y_te = extract_features(sgd_model, test_loader,  device, frac=0.05)
-sgd_acc = knn(feat_tr, y_tr, feat_te, y_te, k=5)
+feat_tr, y_tr = extract_features(sgd_model, train_loader, device, frac=eval_frac)
+feat_te, y_te = extract_features(sgd_model, test_loader,  device, frac=eval_frac)
+sgd_acc = knn(feat_tr, y_tr, feat_te, y_te, k=20)
 print(f"SGD kNN accuracy: {sgd_acc * 100:.2f}%")
 
 results_df = pd.concat([results_df, pd.DataFrame([{
@@ -149,7 +153,7 @@ for alpha in ALPHAS:
         master  = SimCLR().to(device)
 
         worker_opts = [
-            torch.optim.SGD(w.parameters(), lr=LR, momentum=0.9)
+            torch.optim.SGD(w.parameters(), lr=LR)
             for w in workers
         ]
 
@@ -172,9 +176,10 @@ for alpha in ALPHAS:
             
             idx = 0
             for i in range(0, len(batches) - N_WORKERS, N_WORKERS):
-                idx+=1
-                if idx >= 3:
-                    break
+                if DEBUG:
+                    idx+=1
+                    if idx >= 3:
+                        break
                 elastic_opt.step(batches[i : i + N_WORKERS])
 
                 # track average worker loss for this mini-step
@@ -194,10 +199,9 @@ for alpha in ALPHAS:
             print(f"  [Epoch {epoch+1}/{N_EPOCHS}] avg_worker_loss={avg_loss:.4f}")
 
         # kNN eval on master
-        eval_frac = 0.05
         feat_tr, y_tr = extract_features(master, train_loader, device, frac=eval_frac)
         feat_te, y_te = extract_features(master, test_loader,  device, frac=eval_frac)
-        acc = knn(feat_tr, y_tr, feat_te, y_te)
+        acc = knn(feat_tr, y_tr, feat_te, y_te, k=20)
         print(f"  kNN accuracy: {acc * 100:.2f}%")
 
         results_df = pd.concat([results_df, pd.DataFrame([{
