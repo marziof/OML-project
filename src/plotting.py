@@ -152,3 +152,50 @@ plt.close()
 print(f"Saved {path}")
 
 print("\nDone. All plots saved to", PLOTS_DIR)
+
+
+### Accuracy heatmap
+
+FONTSIZE = 12
+
+acc_grid = make_grid("test_accuracy")
+
+fig, ax = plt.subplots(figsize=(6, 5))
+
+im = ax.imshow(acc_grid, cmap="YlOrRd", aspect="auto")
+
+ax.set_xticks(range(len(betas)))
+ax.set_yticks(range(len(alphas)))
+
+ax.tick_params(axis='both', labelsize=FONTSIZE-2)
+
+ax.set_xticklabels([f"β={b}" for b in betas])
+ax.set_yticklabels([f"α={a}" for a in alphas])
+
+#ax.set_title("Test Accuracy", fontsize=12)
+
+cbar = plt.colorbar(im, ax=ax)
+cbar.set_label("Test Accuracy", fontsize=FONTSIZE)
+
+for i in range(len(alphas)):
+    for j in range(len(betas)):
+        ax.text(
+            j, i,
+            f"{acc_grid[i, j]:.4f}",
+            ha="center",
+            va="center",
+            fontsize=FONTSIZE-2,
+            color="black" if acc_grid[i, j] < acc_grid.max() * 0.9 else "white"
+        )
+
+ax.set_xlabel(f"SGD baseline accuracy = {sgd_acc:.4f}", fontsize=FONTSIZE, color="gray")
+#ax.set_ylabel("α", fontsize=FONTSIZE)
+
+plt.tight_layout()
+
+path = os.path.join(PLOTS_DIR, "accuracy_heatmap12.png")
+plt.savefig(path, dpi=150, bbox_inches="tight")
+plt.close()
+
+print(f"Saved {path}")
+
