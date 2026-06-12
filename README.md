@@ -47,6 +47,8 @@ pip install -r requirements.txt
 │   │   └── MNIST
 │   ├── ElasticOptim.py
 │   ├── model.py
+│   ├── objectives.py
+│   ├── landscape_analysis_functions.py
 │   └── plotting.py
 └── utils
     ├── plot_utils.py
@@ -57,9 +59,7 @@ pip install -r requirements.txt
 ├── analysis_mnist.py
 ├── csv_analyzer_2.py
 ├── results.ipynb
-├── landscape_analysis_functions.py
 ├── landscape_analysis.ipynb
-├── objectives.py
 ├── optimization_results_2.csv
 ├── run_optimization_2.py
 ```
