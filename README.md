@@ -34,13 +34,6 @@ pip install -r requirements.txt
 
 ```text
 .
-├── analysis_cifar.py
-├── analysis_figures
-├── analysis_mnist.py
-├── analysis.ipynb
-├── beta_alpha_training.csv
-├── csv_analyzer_2.py
-├── csv_analyzer.py
 ├── data                                  # data for MNIST and CIFAR
 │   ├── cifar-10-batches-py
 │   └── MNIST
@@ -59,6 +52,13 @@ pip install -r requirements.txt
     └── simCLR_helpers.py
 ├── README.md
 ├── requirements.txt
+├── analysis_cifar.py
+├── analysis_figures
+├── analysis_mnist.py
+├── analysis.ipynb
+├── beta_alpha_training.csv
+├── csv_analyzer_2.py
+├── csv_analyzer.py
 ├── results.ipynb
 ├── elastic_gd.py
 ├── experiments.py
