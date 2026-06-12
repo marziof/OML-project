@@ -37,10 +37,11 @@ pip install -r requirements.txt
 ├── data                                  # data for MNIST and CIFAR
 │   ├── cifar-10-batches-py
 │   └── MNIST
-├── plots
 ├── results                               # plots + csv files with dfs generated for mnist and cifar (used for plots)
+│   ├── analysis_figures                            
 │   ├── cifar_simCLR
 │   ├── plots
+│   ├── plots2
 ├── src
 │   ├── data
 │   │   └── MNIST
@@ -53,27 +54,14 @@ pip install -r requirements.txt
 ├── README.md
 ├── requirements.txt
 ├── analysis_cifar.py
-├── analysis_figures
 ├── analysis_mnist.py
-├── analysis.ipynb
-├── beta_alpha_training.csv
 ├── csv_analyzer_2.py
-├── csv_analyzer.py
 ├── results.ipynb
-├── elastic_gd.py
-├── experiments.py
 ├── landscape_analysis_functions.py
 ├── landscape_analysis.ipynb
-├── lookahead_ntb.ipynb
-├── lookahead.py
 ├── objectives.py
 ├── optimization_results_2.csv
-├── optimization_results.csv
-├── optimizers.py
-├── run_datasets.py
-├── run_experiments.ps1
 ├── run_optimization_2.py
-├── run_optimization.py
 ```
 
 ## Quick Start
