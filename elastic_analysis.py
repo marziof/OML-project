@@ -12,8 +12,8 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import pandas as pd
 
-from model import SimpleMLP, evaluate, test
-from ElasticOptim import ElasticOptim
+from src.model import SimpleMLP, evaluate, test
+from src.ElasticOptim import ElasticOptim
 
 
 # ── Results dir ────────────────────────────────────────────────────────────
