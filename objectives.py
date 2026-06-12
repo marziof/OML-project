@@ -16,6 +16,12 @@ class Objective:
     
 # FUNCTIONS 
 
+def ackley_fn(theta):
+    x, y = theta
+    return (-20 * np.exp(-0.2 * np.sqrt(0.5*(x**2 + y**2)))
+            - np.exp(0.5*(np.cos(2*np.pi*x) + np.cos(2*np.pi*y)))
+            + np.e + 20)
+
 def rastrigin_fn(theta, A=10):
     x, y = theta
     return A * 2 + (x**2 - A * np.cos(2 * np.pi * x)) + (y**2 - A * np.cos(2 * np.pi * y))
@@ -70,6 +76,54 @@ def cross_in_tray_fn(theta):
     exp_term = np.exp(abs(100 - np.sqrt(x**2 + y**2)/np.pi))
     return -0.0001*(abs(np.sin(x)*np.sin(y)*exp_term) + 1)**0.1
 
+def styblinski_fn(theta):
+    x, y = theta
+    return 0.5 * ((x**4 - 16*x**2 + 5*x) + (y**4 - 16*y**2 + 5*y))
+
+## Gradient
+
+def sphere_gd(theta):
+    x, y = theta
+    return np.array([2*x, 2*y])  
+
+def rosenbrock_gd(theta):
+    x, y = theta
+    dfdx = -2 * (1 - x) - 400 * x * (y - x**2)
+    dfdy =  200 * (y - x**2)
+    g = np.array([dfdx, dfdy])
+    return np.clip(g, -10.0, 10.0) 
+
+def rastrigin_gd(theta):
+    A = 10
+    return np.array([
+        2*x + 2*np.pi*A * np.sin(2 * np.pi * x)
+        for x in theta
+    ])
+
+
+def himmelblau_gd(theta):
+    x, y = theta
+    dfdx = 4*x*(x**2 + y - 11) + 2*(x + y**2 - 7)
+    dfdy = 2*(x**2 + y - 11) + 4*y*(x + y**2 - 7)
+    return np.clip(np.array([dfdx, dfdy]), -10.0, 10.0)
+
+def ackley_gd(theta):
+    x, y = theta
+    r = np.sqrt(0.5*(x**2 + y**2))
+    exp1 = np.exp(-0.2 * r)
+    exp2 = np.exp(0.5*(np.cos(2*np.pi*x) + np.cos(2*np.pi*y)))
+    
+    dfdx = (20 * exp1 * 0.2 * (0.5*x/r if r > 1e-10 else 0)
+            + exp2 * np.pi * np.sin(2*np.pi*x))
+    dfdy = (20 * exp1 * 0.2 * (0.5*y/r if r > 1e-10 else 0)
+            + exp2 * np.pi * np.sin(2*np.pi*y))
+    return np.clip(np.array([dfdx, dfdy]), -10.0, 10.0)
+
+def styblinski_gd(theta):
+    x, y = theta
+    dfdx = 0.5 * (4*x**3 - 32*x + 5)
+    dfdy = 0.5 * (4*y**3 - 32*y + 5)
+    return np.clip(np.array([dfdx, dfdy]), -10.0, 10.0)
 
 ## OBJECTIVES
 
