@@ -205,6 +205,8 @@ def plot_top_configs(
     ax.set_xticks(range(len(top)))
     ax.set_xticklabels(top["label"])
 
+    ax.set_ylim(min(top["test_accuracy"].min(), sgd_acc) - 0.005, 1.0)
+
     ax.legend()
 
     plt.tight_layout()
