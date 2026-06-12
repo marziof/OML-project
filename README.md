@@ -71,6 +71,10 @@ results.ipynb
 
 ### 2. Reproduce tests on low dimensional landscapes
 
+Run the notebook :
+```bahs
+landscape_analysis.ipynb
+```
 
 ### 3. Reproduce tests on MNIST
 
