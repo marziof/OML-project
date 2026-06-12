@@ -1,5 +1,5 @@
 """
-elastic_analysis.py
+mnist_analysis.py
 
 Sweeps alpha and beta for ElasticOptim on MNIST and compares against
 an SGD baseline. Results are saved to ./results/ as a pickle and CSV.

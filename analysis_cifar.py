@@ -1,5 +1,5 @@
 """
-elastic_analysis_cifar10.py
+analysis_cifar.py
 
 Self-supervised SimCLR training on CIFAR-10 + kNN evaluation.
 Compares SGD baseline vs ElasticOptimSimCLR across (alpha, beta) grid.
