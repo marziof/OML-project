@@ -34,30 +34,46 @@ pip install -r requirements.txt
 
 ```text
 .
-├── configs
-│   └── default.py
-├── results
-│   ├── dfs
-│   ├── past_tests
+├── analysis_cifar.py
+├── analysis_figures
+├── analysis_mnist.py
+├── analysis.ipynb
+├── beta_alpha_training.csv
+├── csv_analyzer_2.py
+├── csv_analyzer.py
+├── data                                  # data for MNIST and CIFAR
+│   ├── cifar-10-batches-py
+│   └── MNIST
+├── plots
+├── results                               # plots + csv files with dfs generated for mnist and cifar (used for plots)
+│   ├── cifar_simCLR
 │   ├── plots
-│   └── sensor_stats
-├── scripts
-│   ├── gen_results.py
-│   ├── plot_pinf_profile.py
-│   ├── plot_results.py
-│   ├── plot_sensors.py
-│   └── run_gen_results.slurm
 ├── src
-│   ├── algorithms
-│   │   ├── non_oracle_selection.py
-│   │   ├── optimal_subset_selection.py
-│   │   ├── sequential_sensor_selection.py
-│   │   └── static_selection.py
-│   ├── Analysis
-│   ├── experiments
-│   ├── helpers
-│   └── utils
-└── test_nb.ipynb
+│   ├── data
+│   │   └── MNIST
+│   ├── ElasticOptim.py
+│   ├── model.py
+│   └── plotting.py
+└── utils
+    ├── plot_utils.py
+    └── simCLR_helpers.py
+├── README.md
+├── requirements.txt
+├── results.ipynb
+├── elastic_gd.py
+├── experiments.py
+├── landscape_analysis_functions.py
+├── landscape_analysis.ipynb
+├── lookahead_ntb.ipynb
+├── lookahead.py
+├── objectives.py
+├── optimization_results_2.csv
+├── optimization_results.csv
+├── optimizers.py
+├── run_datasets.py
+├── run_experiments.ps1
+├── run_optimization_2.py
+├── run_optimization.py
 ```
 
 ## Quick Start
@@ -72,14 +88,14 @@ results.ipynb
 ### 2. Reproduce tests on low dimensional landscapes
 
 Run the notebook :
-```bahs
+```bash
 landscape_analysis.ipynb
 ```
 
 ### 3. Reproduce tests on MNIST
 
 ```bash
-python mnist_analysis.py
+python analysis_mnist.py
 ```
 
 Results are saved in the `results/` directory.
@@ -95,5 +111,5 @@ Plots are saved in `results/plots/`
 ### 4. Reproduce tests on CIFAR-10
 
 ```bash
-python cifar_analysis.py
+python analysis_cifar.py
 ```
